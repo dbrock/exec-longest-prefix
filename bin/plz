@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e -o pipefail
+
+function die { echo "$*" >&2; exit 1; }
+function canonicalize {
+  if test `uname` = Linux; then
+    readlink --canonicalize "$@"
+  elif test `uname` = Darwin; then
+    if which greadlink >/dev/null; then
+      greadlink --canonicalize "$@"
+    else
+      die "plz: error: command not found: greadlink
+Please run \`brew install coreutils'."
+    fi
+  else
+    die "plz: error: operating system not supported: `uname`"
+  fi
+}
+
+if test -z "$LIBEXEC"; then
+  if test -n "$PROGRAM_FILE" && test -n "$PROGRAM_HOME"; then
+    export PROGRAM=`basename $PROGRAM_FILE`
+    PROGRAM_FILE=`canonicalize "$PROGRAM_FILE"`
+    PROGRAM_HOME=`dirname "$PROGRAM_FILE"`/$PROGRAM_HOME
+    PROGRAM_HOME=`canonicalize "$PROGRAM_HOME"`
+    export LIBEXEC=$PROGRAM_HOME/${PROGRAM_LIBEXEC-libexec}
+  else
+    export PROGRAM=`basename $0`
+    export PROGRAM_HOME=`pwd`
+    export LIBEXEC=$PROGRAM_HOME/libexec
+  fi
+
+  test -z "$PLZ_TRACE" || echo plz: LIBEXEC=$LIBEXEC >&2
+fi
+
+test -d $LIBEXEC || die "No such directory: $LIBEXEC"
+test $# != 0 || set -- --default-command
+
+function run {
+  test -z "$PLZ_TRACE" || echo plz: exec `git rev-parse --sq-quote "$@"` >&2
+  exec "$@"
+}
+
+for i in `seq $# | sort -nr`; do
+  file="$LIBEXEC/${@:1:$i}"
+  if test -f "$file" && test -x "$file"; then
+    run "$file" "${@:$(($i + 1))}"
+  elif test -L "$file"; then
+    run `canonicalize "$file"` "${@:$(($i + 1))}"
+  fi
+done
+
+if test -f "$LIBEXEC"/--no-such-command; then
+  run "$LIBEXEC"/--no-such-command "$@"
+else
+  die "$PROGRAM: error: no such command: $*"
+fi
