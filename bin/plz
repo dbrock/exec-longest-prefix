@@ -17,6 +17,12 @@ Please run \`brew install coreutils'."
   fi
 }
 
+if test -f .env; then
+  while read line; do
+    export "$line"
+  done < .env
+fi
+
 if test -z "$LIBEXEC"; then
   if test -n "$PROGRAM_FILE" && test -n "$PROGRAM_HOME"; then
     export PROGRAM=`basename $PROGRAM_FILE`
