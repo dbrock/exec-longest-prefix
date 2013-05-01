@@ -23,32 +23,29 @@ if test -f .env; then
   done < .env
 fi
 
-if test -z "$LIBEXEC"; then
-  if test -n "$PROGRAM_FILE" && test -n "$PROGRAM_HOME"; then
-    export PROGRAM=`basename $PROGRAM_FILE`
-    PROGRAM_FILE=`canonicalize "$PROGRAM_FILE"`
-    PROGRAM_HOME=`dirname "$PROGRAM_FILE"`/$PROGRAM_HOME
-    PROGRAM_HOME=`canonicalize "$PROGRAM_HOME"`
-    export LIBEXEC=$PROGRAM_HOME/${PROGRAM_LIBEXEC-libexec}
-  else
-    export PROGRAM=`basename $0`
-    export PROGRAM_HOME=`pwd`
-    export LIBEXEC=$PROGRAM_HOME/libexec
-  fi
-
-  test -z "$PLZ_TRACE" || echo plz: LIBEXEC=$LIBEXEC >&2
+if test -n "$PLZ_FILE" && test -n "$PLZ_CDUP"; then
+  export PROGRAM_NAME=`basename $PLZ_FILE`
+  file=`canonicalize "$PLZ_FILE"`
+  home=`dirname "$file"`/$PLZ_CDUP
+  export PROGRAM_HOME=`canonicalize "$home"`
+  libexec=$PROGRAM_HOME/${PLZ_LIBEXEC-libexec}
+else
+  die "plz: error: missing \$PLZ_FILE and/or \$PLZ_CDUP"
 fi
 
-test -d $LIBEXEC || die "No such directory: $LIBEXEC"
+test -z "$PLZ_TRACE" ||
+echo plz: trace: PROGRAM_NAME=$PROGRAM_NAME libexec=$libexec >&2
+test -d $libexec || die "plz: error: no such directory: $libexec"
 test $# != 0 || set -- --default-command
 
 function run {
-  test -z "$PLZ_TRACE" || echo plz: exec `git rev-parse --sq-quote "$@"` >&2
+  test -z "$PLZ_TRACE" ||
+  echo plz: trace: exec `git rev-parse --sq-quote "$@"` >&2
   exec "$@"
 }
 
 for i in `seq $# | sort -nr`; do
-  file="$LIBEXEC/${@:1:$i}"
+  file="$libexec/${@:1:$i}"
   if test -f "$file" && test -x "$file"; then
     run "$file" "${@:$(($i + 1))}"
   elif test -L "$file"; then
@@ -56,8 +53,8 @@ for i in `seq $# | sort -nr`; do
   fi
 done
 
-if test -f "$LIBEXEC"/--no-such-command; then
-  run "$LIBEXEC"/--no-such-command "$@"
+if test -f "$libexec"/--no-such-command; then
+  run "$libexec"/--no-such-command "$@"
 else
-  die "$PROGRAM: error: no such command: $*"
+  die "$PROGRAM_NAME: error: no such command: $*"
 fi
