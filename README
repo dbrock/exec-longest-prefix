@@ -1,0 +1,2 @@
+#!/bin/bash
+PLZ_FILE=$0 PLZ_CDUP=.. exec plz "$@"
