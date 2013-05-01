@@ -29,6 +29,7 @@ if test -n "$PLZ_FILE" && test -n "$PLZ_CDUP"; then
   home=`dirname "$file"`/$PLZ_CDUP
   export PROGRAM_HOME=`canonicalize "$home"`
   libexec=$PROGRAM_HOME/${PLZ_LIBEXEC-libexec}
+  PLZ_FILE= PLZ_CDUP= PLZ_LIBEXEC=
 else
   die "plz: error: missing \$PLZ_FILE and/or \$PLZ_CDUP"
 fi
