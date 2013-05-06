@@ -24,7 +24,7 @@ if test -f .env; then
 fi
 
 if test -n "$PLZ_FILE" && test -n "$PLZ_CDUP"; then
-  export PROGRAM_NAME=`basename $PLZ_FILE`
+  export PROGRAM_NAME=`basename "$PLZ_FILE"`
   file=`canonicalize "$PLZ_FILE"`
   home=`dirname "$file"`/$PLZ_CDUP
   export PROGRAM_HOME=`canonicalize "$home"`
