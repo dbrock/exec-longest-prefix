@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e -o pipefail
+source plz-util.sh
+
+if test `uname` = Linux; then
+  readlink --canonicalize-missing "$@"
+elif test `uname` = Darwin; then
+  if which greadlink >/dev/null; then
+    greadlink --canonicalize-missing "$@"
+  else
+    error "command not found: greadlink
+Please run \`brew install coreutils'."
+  fi
+else
+  error "operating system not supported: `uname`"
+fi

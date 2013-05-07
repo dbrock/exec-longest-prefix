@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e -o pipefail
+source plz-util.sh
+
+for ((i = $#; i >= 1; i--)); do
+  if test -e "${LIBEXEC:?}/${*:1:$i}"; then
+    shell-quote "${*:1:$i}" "${@:$((1 + i))}"
+    exit 0
+  fi
+done
+
+exit 1

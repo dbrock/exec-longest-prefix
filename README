@@ -1,2 +1,11 @@
 #!/bin/bash
-PLZ_FILE=$0 PLZ_CDUP=.. exec plz "$@"
+
+for file in ~/.fooenv .fooenv; do
+  if test -f "$file"; then
+    while read line; do
+      export "$line"
+    done < "$file"
+  fi
+done
+
+LIBEXEC="$0"/../../libexec exec plz-exec "$@"
