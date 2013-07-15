@@ -1,11 +1,5 @@
 {
-  "name": "plz",
-  "version": "0.2.0",
-  "bin": {
-    "plz-exec": "bin/plz-exec",
-    "plz-expand-file-name": "bin/plz-expand-file-name",
-    "plz-parse-command": "bin/plz-parse-command",
-    "plz-parse-longest-prefix": "bin/plz-parse-longest-prefix",
-    "plz-util.sh": "bin/plz-util.sh"
-  }
+  "name": "exec-longest-prefix",
+  "version": "0.0.0",
+  "bin": "bin/exec-longest-prefix"
 }

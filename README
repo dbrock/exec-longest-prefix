@@ -1,11 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-for file in ~/.fooenv .fooenv; do
-  if test -f "$file"; then
+# This is an example of how to implement a command which reads a
+# couple of environment files and then delegates control to its
+# subcommands in a `libexec' folder using `exec-longest-prefix'.
+
+for envfile in ~/.fooenv .fooenv; do
+  if [[ -f "$envfile" ]]; then
     while read line; do
       export "$line"
-    done < "$file"
+    done < "$envfile"
   fi
 done
 
-LIBEXEC="$0"/../../libexec exec plz-exec "$@"
+exec-longest-prefix "$0"/../../libexec "$@"

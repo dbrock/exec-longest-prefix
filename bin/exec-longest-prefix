@@ -1,0 +1,67 @@
+#!/bin/bash
+set -e -o pipefail
+
+function error { echo >&2 `basename $0`: $*; exit 1; }
+function shell-quote { git rev-parse --sq-quote "${@}"; }
+
+# Resolve symbolic links recursively.
+function expand-file-name {
+  if test `uname` = Linux; then
+    readlink --canonicalize-missing "$@"
+  elif test `uname` = Darwin; then
+    if which greadlink >/dev/null; then
+      greadlink --canonicalize-missing "$@"
+    else
+      error "command not found: greadlink
+Please run \`brew install coreutils'."
+    fi
+  else
+    error "operating system not supported: `uname`"
+  fi
+}
+
+function echo-best-argv {
+  if [[ -d "$1" ]]; then
+    LIBEXEC=$1; shift
+  else
+    error "no such directory: $1"
+  fi
+
+  # Check whether the first argument is a file in $LIBEXEC.  If so,
+  # output the shell-quoted command line.  Otherwise, exit non-zero.
+  function echo-argv-if-command-exists {
+    if [[ -L "$LIBEXEC/$1" ]]; then
+      # Traverse symbolic links recursively.
+      echo-argv-if-command-exists $(expand-file-name "$LIBEXEC/$1") "${@:2}"
+    elif [[ -e "$LIBEXEC/$1" ]]; then
+      # If the file exists
+      shell-quote "$LIBEXEC/$@"
+    else
+      return 1
+    fi
+  }
+
+  # Instead of no arguments, use `--default-command'.
+  [[ $# > 0 ]] || set -- --default-command
+
+  # First, try interpreting the whole argv as one opaque command.
+  # Then try each longest prefix in turn, until a command is found.
+  for ((i = $#; i >= 1; i--)); do
+    echo-argv-if-command-exists "${*:1:$i}" "${@:$((1 + i))}" \
+      && return; done
+
+  # If no matching command is found, as a last resort, try invoking
+  # the special command `--dynamic-command' with the original argv.
+  echo-argv-if-command-exists --dynamic-command "$@" \
+    || error "no such command: $(shell-quote "$@")"
+}
+
+if [[ $# = 0 ]]; then
+  error "usage: [-n] LIBEXEC [ARGV...]"
+elif [[ $1 = -n ]]; then
+  shift; echo-best-argv "$@"
+elif argv=$(echo-best-argv "$@"); then
+  eval exec $argv
+else
+  exit 1
+fi
